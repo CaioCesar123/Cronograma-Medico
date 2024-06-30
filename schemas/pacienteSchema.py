@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field,validator
 from models.paciente import Paciente
 from datetime import datetime
 from typing import Optional,List
@@ -9,6 +9,12 @@ class createPaciente(BaseModel):
     doenca : Optional[str]
     notas : Optional[str] = ""
     userID : int
+
+    @validator('nome','doenca','notas', pre=True)
+    def convert_str(cls, value):
+        if not isinstance(value,str):
+            return str(value)
+        return value
 
 class findPacienteById(BaseModel):
     idPaciente : int
@@ -22,6 +28,12 @@ class updatePaciente(BaseModel):
     dataConsulta : Optional[datetime] = Field(None)
     doenca : Optional[str] = Field(None)
     notes : Optional[str] = Field(None)
+
+    @validator('nome','doenca','notes', pre=True)
+    def convert_str(cls, value):
+        if not isinstance(value,str):
+            return str(value)
+        return value
 
 def return_Paciente(paciente : Paciente):
     return {

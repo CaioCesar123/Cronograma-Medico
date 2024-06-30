@@ -53,7 +53,7 @@ function populateTable(pacientes) {
 
         const tableData = pacientes.map(paciente => [
             paciente.nome,
-            formatarDataHora(paciente.data),
+            new Date(paciente.data).toISOString().substring(0, 16).replace('T', ' '),
             paciente.doenca,
             paciente.notas,
             `<button class="btn btn-primary" onclick="editPaciente(${paciente.id}, '${paciente.nome}', '${paciente.doenca}', '${formatarDataParaParametro(paciente.data)}', '${paciente.notas}')">Editar</button>
@@ -78,21 +78,6 @@ function formatarDataParaParametro(data) {
     return dataObj.toISOString();
 }
 
-function formatarDataHora(data) {
-    const dataObj = new Date(data);
-    const dataFormatada = dataObj.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit'
-    });
-
-    const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-
-    return `${dataFormatada} - ${horaFormatada}`;
-}
 
 function editPaciente(id, nome, doenca, data, notas) {
     $('#editPacienteModal').modal('show');
@@ -136,7 +121,6 @@ function closeModal() {
 }
 
 async function savePaciente() {
-    debugger
     const nome = document.getElementById('createPacienteNome').value;
     const dataConsulta = document.getElementById('createPacienteDataConsulta').value;
     const sintomas = document.getElementById('createPacienteSintomas').value;
@@ -230,7 +214,7 @@ function populateReceitaList(receitas) {
 
         const dataTable = new simpleDatatables.DataTable(tableElement, {
             data: {
-                headings: ["Nome", "Utilizar até o dia", "horas", "Controler"],
+                headings: ["Remédio", "Utilizar até o dia", "horas", "Controler"],
                 data: tableData
             }
         });

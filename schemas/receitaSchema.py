@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from models.receita import Receita
 from datetime import datetime, time
 from typing import Optional,List
@@ -8,6 +8,12 @@ class createReceita(BaseModel):
     data : Optional[datetime] = datetime.now()
     hora : Optional[time] = datetime.now().time()
     pacienteId : int
+
+    @validator('remedio', pre=True)
+    def convert_str(cls, value):
+        if not isinstance(value,str):
+            return str(value)
+        return value
 
 class findReceitaById(BaseModel):
     idReceita : int
@@ -20,6 +26,12 @@ class updateReceita(BaseModel):
     remedio : Optional[str] = Field(None)
     data : Optional[datetime] = Field(None)
     hora : Optional[time] = Field(None)
+
+    @validator('remedio', pre=True)
+    def convert_str(cls, value):
+        if not isinstance(value,str):
+            return str(value)
+        return value
 
 def return_Receita(receita : Receita):
     return {
