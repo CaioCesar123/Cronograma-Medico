@@ -2,20 +2,17 @@ from flask import Flask, jsonify, make_response,redirect
 from sqlalchemy.exc import IntegrityError
 from flask_openapi3 import OpenAPI, Info, Tag
 from flask_cors import CORS
-import logging
 import config
 from models import Session,Usuario,Base,Paciente,Receita
 from schemas.usuarioSchema import usuarioSchema,return_usuario,loginSchema,deleteSchema
 from schemas.pacienteSchema import return_Paciente,createPaciente, findPacienteById,updatePaciente,getAll_Paciente,findListPacinete
 from schemas.receitaSchema import createReceita,return_Receita,findReceitaById,findListReceita,updateReceita,getAll_Receita
+from logger import logger
 
 info = Info(title="Cronograma Medico", version="1.0.0")
 app = OpenAPI(__name__, info=info)
 app.config.from_object(config)
 CORS(app)
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 home_tag = Tag(name="Documentação", description="Seleção de documentação: Swagger, Redoc ou RapiDoc")
 usuario_tag = Tag(name="Usuario", description="Criação, visualização e remoção de usuários")
@@ -31,6 +28,7 @@ def create_user(form : usuarioSchema):
 
     if(usuario_email):
         error_msg = "Não foi possível criar o usuário, o email já está em uso."
+        logger.warning(error_msg)
         return {"message": error_msg}, 400
     
     usuario = Usuario(
@@ -38,18 +36,21 @@ def create_user(form : usuarioSchema):
         nome=form.nome,
         senha=form.senha
     )
-
+    logger.debug(f"Adcionando usuario : '{usuario.usuario_nome}'")
     try:
         session.add(usuario)
         session.commit()
+        logger.info(f"Usuario adcionado com sucesso : '{usuario.usuario_nome}'")
         return {"usuario" : return_usuario(usuario)}, 200
     except IntegrityError:
         session.rollback()
         error_msg = "Não foi possível criar o usuário, o email já está em uso."
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
         error_msg = "Não foi possível criar o usuário"
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.post('/usuairo/login', tags=[usuario_tag])
@@ -60,21 +61,26 @@ def login_user(form : loginSchema):
 
     if(not usuario):
         error_msg = "Não foi possível localizar usuário."
+        logger.warning(error_msg)
         return {"message": error_msg}, 400
     
     if(usuario.usuario_senha != form.senha):
         error_msg = "Senha ou email errada."
+        logger.warning(error_msg)
         return {"message": error_msg}, 400
 
     try:
+        logger.info(f"Login feito com sucesso : '{usuario.usuario_nome}'")
         return {"usuario" : return_usuario(usuario)}, 200
     except IntegrityError:
         session.rollback()
         error_msg = "Hove algum erro durante o loggin."
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
         error_msg =  "Hove algum erro durante o loggin."
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
 
 @app.delete('/usuairo/delete', tags=[usuario_tag])
@@ -87,6 +93,7 @@ def delete_user(form : deleteSchema):
         response_data = {
             "message": "Usuario não encontrado"
         }
+        logger.warning(response_data)
         return make_response(jsonify(response_data), 400)
 
     try:
@@ -95,14 +102,17 @@ def delete_user(form : deleteSchema):
         response_data = {
             "message": "Usuario apagado com sucesso"
         }
+        logger.info(response_data)
         return make_response(jsonify(response_data), 200)
     except IntegrityError:
         session.rollback()
         error_msg = "Não foi possivel apagar o usuario."
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
         error_msg = "Não foi possivel apagar o usuario."
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.post('/paciente/create', tags=[paciente_tag])
@@ -122,21 +132,26 @@ def create_Paciente(form : createPaciente):
         response_data = {
             "message": "Usuario não encontrado"
         }
+        logger.warning(response_data)
         return make_response(jsonify(response_data), 400)
     
     paciente.usuario = usuario
+    logger.debug(f"Adcionando paciente : '{paciente.paciente_nome}'")
 
     try:
         session.add(paciente)
         session.commit()
+        logger.info(f"Paciente adcionado : '{paciente.paciente_nome}'")
         return {"paciente" : return_Paciente(paciente)}, 200
     except IntegrityError:
         session.rollback()
         error_msg = "Não foi possível criar o paciente"
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
         error_msg = "Não foi possível criar o paciente"
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.delete('/paciente/delete', tags=[paciente_tag])
@@ -149,6 +164,7 @@ def delete_paciente(form : findPacienteById):
         response_data = {
             "message": "Paciente não encontrado"
         }
+        logger.warning(response_data)
         return make_response(jsonify(response_data), 400)
 
     try:
@@ -157,14 +173,17 @@ def delete_paciente(form : findPacienteById):
         response_data = {
             "message": "Paciente apagado com sucesso"
         }
+        logger.info(response_data)
         return make_response(jsonify(response_data), 200)
     except IntegrityError:
         session.rollback()
         error_msg = "Não foi possivel apagar o Paciente."
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
         error_msg = "Não foi possivel apagar o Paciente."
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.put('/paciente/update', tags=[paciente_tag])
@@ -176,6 +195,7 @@ def update_Paciente(form: updatePaciente) :
         response_data = {
             "message": "Paciente não encontrado"
         }
+        logger.warning(response_data)
         return make_response(jsonify(response_data), 400)
     
     if form.dataConsulta is not None :
@@ -189,14 +209,17 @@ def update_Paciente(form: updatePaciente) :
 
     try:
         session.commit()
+        logger.info(f"Paciente atualizado : '{paciente.paciente_nome}'")
         return {"paciente" : return_Paciente(paciente)}, 200
     except IntegrityError:
         session.rollback()
-        error_msg = "Não foi possível criar o paciente"
+        error_msg = "Não foi possível atualizar o paciente"
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
-        error_msg = "Não foi possível criar o paciente"
+        error_msg = "Não foi possível atualizar o paciente"
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.post('/paciente/getList', tags=[paciente_tag])
@@ -204,14 +227,17 @@ def list_Paciente(form : findListPacinete):
     session = Session()
     pacinetes = session.query(Paciente).filter(Paciente.usuario_id==form.idUser)
     try:
+        logger.info(f"Pacientes localizados com sucesso!")
         return jsonify(getAll_Paciente(pacinetes)),200
     except IntegrityError:
         session.rollback()
-        error_msg = "Não foi possível criar o paciente"
+        error_msg = "Não foi possível pegar a lista de paciente"
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
-        error_msg = "Não foi possível criar o paciente"
+        error_msg = "Não foi possível pegar a lista de paciente"
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.post('/receita/create', tags=[receita_tag])
@@ -230,6 +256,7 @@ def create_Receita(form : createReceita):
         response_data = {
             "message": "Paciente não encontrado"
         }
+        logger.warning(response_data)
         return make_response(jsonify(response_data), 400)
     
     receita.paciente = paciente
@@ -237,14 +264,17 @@ def create_Receita(form : createReceita):
     try:
         session.add(receita)
         session.commit()
+        logger.info(f"Nova receita : '{receita.receita_remedio}'")
         return {"receita" : return_Receita(receita)}, 200
     except IntegrityError:
         session.rollback()
-        error_msg = "Não foi possível atualizar a receita"
+        error_msg = "Não foi possível criar a receita"
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
-        error_msg = "Não foi possível atualizar a receita"
+        error_msg = "Não foi possível criar a receita"
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.delete('/receita/delete', tags=[receita_tag])
@@ -257,6 +287,7 @@ def delete_receita(form : findReceitaById):
         response_data = {
             "message": "Receita não encontrado"
         }
+        logger.warning(response_data)
         return make_response(jsonify(response_data), 400)
 
     try:
@@ -265,14 +296,17 @@ def delete_receita(form : findReceitaById):
         response_data = {
             "message": "Receita apagado com sucesso"
         }
+        logger.info(response_data)
         return make_response(jsonify(response_data), 200)
     except IntegrityError:
         session.rollback()
         error_msg = "Não foi possivel apagar a Receita."
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
         error_msg = "Não foi possivel apagar a Receita."
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.put('/receita/update', tags=[receita_tag])
@@ -284,6 +318,7 @@ def update_Receita(form: updateReceita) :
         response_data = {
             "message": "Receita não encontrado"
         }
+        logger.warning(response_data)
         return make_response(jsonify(response_data), 400)
     
     if form.data is not None :
@@ -295,14 +330,17 @@ def update_Receita(form: updateReceita) :
 
     try:
         session.commit()
+        logger.info(f"Receita atualizada : '{receita.receita_remedio}'")
         return {"Receita" : return_Receita(receita)}, 200
     except IntegrityError:
         session.rollback()
         error_msg = "Não foi possível atualizar a receita"
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
         error_msg = "Não foi possível atualizar a receita"
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
 @app.post('/receita/getList', tags=[receita_tag])
@@ -310,14 +348,17 @@ def list_Receita(form : findListReceita):
     session = Session()
     receitas = session.query(Receita).filter(Receita.paciente_id==form.idPaciente)
     try:
+        logger.info(f"Receitas encontradas")
         return getAll_Receita(receitas), 200
     except IntegrityError:
         session.rollback()
         error_msg = "Não foi possível achar as receitas"
+        logger.error(error_msg)
         return {"message": error_msg}, 400
     except Exception as e:
         session.rollback()
         error_msg = "Não foi possível achar as receitas"
+        logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
 
 
