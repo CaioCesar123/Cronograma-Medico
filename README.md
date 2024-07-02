@@ -67,11 +67,11 @@ Este é um projeto desenvolvido em Python, utilizando SQLAlchemy e Pydantic, com
 
 ## Endpoints
 
-- `POST /pacientes/getList`: Lista todos os pacientes.
+- `GET /pacientes`: Lista todos os pacientes.
 - `POST /paciente/create`: Cria um novo paciente.
 - `PUT /paciente/update`: Atualiza as informações de um paciente existente.
 - `DELETE /paciente/delete`: Deleta um paciente.
 
-- `POST /receitas/getList`: Lista todas as receitas.
+- `GET /receitas`: Lista todas as receitas.
 - `POST /receita/create`: Cria uma nova receita.
 - `DELETE /receita/delete`: Deleta uma receita.

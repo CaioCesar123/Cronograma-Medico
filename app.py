@@ -222,10 +222,10 @@ def update_Paciente(form: updatePaciente) :
         logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
-@app.post('/paciente/getList', tags=[paciente_tag])
-def list_Paciente(form : findListPacinete):
+@app.get('/paciente', tags=[paciente_tag])
+def list_Paciente(query : findListPacinete):
     session = Session()
-    pacinetes = session.query(Paciente).filter(Paciente.usuario_id==form.idUser)
+    pacinetes = session.query(Paciente).filter(Paciente.usuario_id==query.idUser)
     try:
         logger.info(f"Pacientes localizados com sucesso!")
         return jsonify(getAll_Paciente(pacinetes)),200
@@ -343,10 +343,10 @@ def update_Receita(form: updateReceita) :
         logger.error(f"'{error_msg}' : '{str(e)}")
         return {"message": error_msg}, 400
     
-@app.post('/receita/getList', tags=[receita_tag])
-def list_Receita(form : findListReceita):
+@app.get('/receita', tags=[receita_tag])
+def list_Receita(query : findListReceita):
     session = Session()
-    receitas = session.query(Receita).filter(Receita.paciente_id==form.idPaciente)
+    receitas = session.query(Receita).filter(Receita.paciente_id==query.idPaciente)
     try:
         logger.info(f"Receitas encontradas")
         return getAll_Receita(receitas), 200
